@@ -1,7 +1,8 @@
 use matrixerror::MatrixError;
-use matrixtraits::MatrixSlice;
+use matrixtraits::{MatrixSlice, MatrixTransform};
 
 use std::fmt;
+use std::iter;
 
 ///Holds the matrix data in a Vec with the following structure:<br>
 ///(0,0);(0,1) .. (0,n);(1,0);(1,1) .. (1,n) .. (m,0);(m,1) .. (m,n)<br>
@@ -267,6 +268,72 @@ impl<T> MatrixSlice<T> for Matrix<T> where T: Clone
 	}
 }
 
+impl<T> MatrixTransform<T> for Matrix<T> where T: Clone
+{
+	///Changes the size of the matrix<br>
+	///<br>
+	///Possible errors:<br>
+	///-ReshapeNotPossible
+	fn reshape(self, rows: usize, cols: usize) -> Result<Matrix<T>, MatrixError>
+	{
+		if self.get_row_count() * self.get_col_count() != rows * cols
+		{
+			return Err(MatrixError::ReshapeNotPossible);
+		}
+		Ok(try!(Matrix::from_vec(self.fields, rows, cols)))
+	}
+
+	///Transposes the matrix
+	fn transpose(self) -> Matrix<T>
+	{
+		let default = self.get(0, 0).unwrap();
+		let orig_rows = self.get_row_count();
+		let orig_cols = self.get_col_count();
+		let mut new_matrix = Matrix::new(orig_cols, orig_rows, default).unwrap();
+		for row in 0..orig_rows
+		{
+			for col in 0..orig_cols
+			{
+				let val = self.get(row, col).unwrap();
+				let _ = new_matrix.set(col, row, val);
+			}
+		}
+		new_matrix
+	}
+
+	///Flips the matrix horizontally
+	fn flip_hor(&mut self)
+	{
+		let cols = self.get_col_count();
+		let rows = self.get_row_count();
+		let half_rows_f: f64 = self.get_row_count() as f64 / 2.0;
+		let half_rows: usize = half_rows_f.floor() as usize;
+		for row in 0..half_rows
+		{
+			for col in 0..cols
+			{
+				let _ = self.swap(row, col, rows-row-1, col);
+			}
+		}
+	}
+	
+	///Flips the matrix vertically
+	fn flip_vert(&mut self)
+	{
+		let cols = self.get_col_count();
+		let rows = self.get_row_count();
+		let half_cols_f: f64 = self.get_col_count() as f64 / 2.0;
+		let half_cols: usize = half_cols_f.floor() as usize;
+		for col in 0..half_cols
+		{
+			for row in 0..rows
+			{
+				let _ = self.swap(row, col, row, cols-col-1);
+			}
+		}
+	}
+}
+
 impl<T> fmt::Display for Matrix<T> where T: Clone + fmt::Display
 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result 
@@ -329,5 +396,16 @@ impl<T> fmt::Debug for Matrix<T> where T: Clone + fmt::Debug
 		}
 		output.push(']');
 		write!(f, "{}", output)
+	}
+}
+
+impl<T> iter::IntoIterator for Matrix<T>
+{
+	type Item = T;
+	type IntoIter = ::std::vec::IntoIter<T>;
+
+	fn into_iter(self) -> Self::IntoIter
+	{
+		self.fields.into_iter()
 	}
 }

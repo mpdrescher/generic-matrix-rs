@@ -1,6 +1,7 @@
 use matrix::Matrix;
 use matrixbuilder::MatrixBuilder;
 use matrixtraits::MatrixSlice;
+use matrixtraits::MatrixTransform;
 
 //TEST DEFAULT IMPLEMENTATION
 
@@ -67,14 +68,14 @@ fn test_build_chain()
 fn test_display()
 {
 	let matrix = MatrixBuilder::new().row(vec!(1,2)).row(vec!(3,4)).build().unwrap();
-	println!("DISPLAY:\n{}", matrix);
+	//println!("DISPLAY:\n{}", matrix);
 }
 
 #[test]
 fn test_debug()
 {
 	let matrix = MatrixBuilder::new().row(vec!(1,2)).row(vec!(3,4)).build().unwrap();
-	println!("DISPLAY:\n{:?}", matrix);
+	//println!("DISPLAY:\n{:?}", matrix);
 }
 
 //TEST IMPL OF MATRIXSLICE
@@ -141,4 +142,135 @@ fn test_replace_area()
 	//println!("REPLACE:\n{} \n{}", matrix, matrix_2);
 	assert!(matrix == matrix_2);
 
+}
+
+//TEST IMPL OF INTOITER
+
+#[test]
+fn test_into_iter()
+{
+	let matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.build()
+						.unwrap();
+	let result = matrix.into_iter().map(|x| x * 2).collect::<Vec<usize>>();
+	assert_eq!(result, vec!(2, 4, 6, 8));
+}
+
+//TEST IMPL OF MATRIXTRANSFORM
+
+#[test]
+fn test_reshape()
+{
+	let matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.row(vec!(5,6))
+						.build()
+						.unwrap();
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(1,2,3))
+						.row(vec!(4,5,6))
+						.build()
+						.unwrap();
+	assert_eq!(matrix.reshape(2, 3).unwrap(), matrix2);
+}
+
+#[test]
+fn test_transpose()
+{
+	let matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.row(vec!(5,6))
+						.build()
+						.unwrap();
+
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(1,3,5))
+						.row(vec!(2,4,6))
+						.build()
+						.unwrap();
+	assert_eq!(matrix.transpose(), matrix2);
+}
+
+#[test]
+fn test_flip_hor()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.row(vec!(5,6))
+						.build()
+						.unwrap();
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(5,6))
+						.row(vec!(3,4))
+						.row(vec!(1,2))
+						.build()
+						.unwrap();
+	matrix.flip_hor();
+	assert_eq!(matrix, matrix2);
+}
+
+#[test]
+fn test_flip_hor_2()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2,3,4))
+						.row(vec!(5,6,7,8))
+						.row(vec!(9,10,11,12))
+						.row(vec!(13,14,15,16))
+						.build()
+						.unwrap();
+	let mut matrix2 = MatrixBuilder::new()
+						.row(vec!(13,14,15,16))
+						.row(vec!(9,10,11,12))
+						.row(vec!(5,6,7,8))
+						.row(vec!(1,2,3,4))
+						.build()
+						.unwrap();
+	matrix.flip_hor();
+	assert_eq!(matrix, matrix2);
+}
+
+#[test]
+fn test_flip_vert()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.row(vec!(5,6))
+						.build()
+						.unwrap();
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(2,1))
+						.row(vec!(4,3))
+						.row(vec!(6,5))
+						.build()
+						.unwrap();
+	matrix.flip_vert();
+	assert_eq!(matrix, matrix2);
+}
+
+#[test]
+fn test_flip_vert_2()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2,3,4))
+						.row(vec!(5,6,7,8))
+						.row(vec!(9,10,11,12))
+						.row(vec!(13,14,15,16))
+						.build()
+						.unwrap();
+	let mut matrix2 = MatrixBuilder::new()
+						.row(vec!(4,3,2,1))
+						.row(vec!(8,7,6,5))
+						.row(vec!(12,11,10,9))
+						.row(vec!(16,15,14,13))
+						.build()
+						.unwrap();
+	matrix.flip_vert();
+	assert_eq!(matrix, matrix2);
 }

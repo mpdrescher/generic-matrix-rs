@@ -12,14 +12,10 @@ pub trait MatrixSlice<T>
 	fn replace_area(&mut self, row_1: usize, col_1: usize, row_2: usize, col_2: usize, replacement: Matrix<T>) -> Result<(), MatrixError>;
 }
 
-
-
-
-
-/*
-transform
-	rotate_90
-	rotate_180
-	rotate_270
-	...wikipedia
-*/
+pub trait MatrixTransform<T>
+{
+	fn reshape(self, rows: usize, cols: usize) -> Result<Matrix<T>, MatrixError>;
+	fn transpose(self) -> Matrix<T>;
+	fn flip_hor(&mut self);
+	fn flip_vert(&mut self);
+}
