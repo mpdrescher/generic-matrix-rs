@@ -1,4 +1,5 @@
 use matrixerror::MatrixError;
+use matrixtraits::MatrixSlice;
 
 use std::fmt;
 
@@ -180,6 +181,46 @@ impl<T> Matrix<T> where T: Clone
 		row * self.columns + col
 	}
 }
+
+impl<T> MatrixSlice<T> for Matrix<T> where T: Clone
+{
+	fn get_row(&self, row: usize) -> Vec<T>
+	{
+		let mut result = Vec::new();
+		for col in 0..self.get_col_count()
+		{
+			result.push(self.get(row, col).0);
+		}
+		result
+	}
+
+	fn get_col(&self, col: usize) -> Vec<T>
+	{
+		let mut result = Vec::new();
+		for row in 0..self.get_row_count()
+		{
+			result.push(self.get(row, col).0);
+		}
+		result
+	}
+	
+	fn crop(self, row_1: usize, col_1: usize, row_2: usize, col_2: usize) -> Matrix<T>
+	{
+		let valid_1 = self.is_valid_index(row_1, col_1);
+		let valid_2 = self.is_valid_index(row_2, col_2);
+		
+	}
+
+	fn copy_crop(&self, row_1: usize, col_1: usize, row_2: usize, col_2: usize) -> Matrix<T>
+	{
+
+	}
+
+	fn replace_area(&self, row_1: usize, col_1: usize, row_2: usize, col_2: usize, replacement: Matrix<T>)
+	{
+
+	}
+} 
 
 impl<T> fmt::Display for Matrix<T> where T: Clone + fmt::Display
 {
