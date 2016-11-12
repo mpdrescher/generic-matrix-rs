@@ -1,8 +1,9 @@
 use matrixerror::MatrixError;
-use matrixtraits::{MatrixSlice, MatrixTransform, MatrixSearch};
+use matrixtraits::{MatrixSlice, MatrixTransform, MatrixSearch, MatrixExec};
 
 use std::fmt;
 use std::iter;
+use std::ops;
 
 ///Holds the matrix data in a Vec with the following structure:<br>
 ///(0,0);(0,1) .. (0,n);(1,0);(1,1) .. (1,n) .. (m,0);(m,1) .. (m,n)<br>
@@ -103,7 +104,7 @@ impl<T> Matrix<T> where T: Clone
 	///-IndexOOB
 	pub fn set(&mut self, row: usize, col: usize, value: T) -> Result<(), MatrixError>
 	{
-		let mutref = try!(self.get_mut(row, col));
+		let mutref = try!(self.get_mut_ref(row, col));
 		*mutref = value;
 		Ok(())
 	}
@@ -158,11 +159,11 @@ impl<T> Matrix<T> where T: Clone
 		self.get_row_count() == other.get_row_count() && self.get_col_count() == other.get_col_count()
 	}
 
-	//like get(..), but not used because of set(..)
-	//
-	//Possible errors:
-	//-IndexOOB
-	fn get_mut(&mut self, row: usize, col: usize) -> Result<&mut T, MatrixError>
+	///Returns a mutable reference to a field in the matrix
+	///
+	///Possible errors:
+	///-IndexOOB
+	pub fn get_mut_ref(&mut self, row: usize, col: usize) -> Result<&mut T, MatrixError>
 	{
 		if !self.is_valid_index(row, col)
 		{
@@ -390,6 +391,89 @@ impl<T> MatrixTransform<T> for Matrix<T> where T: Clone
 				let _ = self.swap(row, col, row, cols-col-1);
 			}
 		}
+	}
+}
+
+impl<T> MatrixExec<T> for Matrix<T> where T: Clone
+{
+	///Applies a closure to each element of the matrix<br>
+	///<br>
+	///The first parameter of the closure is a copy of the value from self
+	fn apply<F>(&mut self, closure: F) where F: Fn(T) -> T
+	{
+		for row in 0..self.get_row_count()
+		{
+			for col in 0..self.get_col_count()
+			{
+				let var = closure(self.get(row, col).unwrap());
+				let _ = self.set(row, col, var);
+			}
+		}
+	}
+
+	///Applies a closure to each element of the matrix in dependence of<br>
+	///the element itself and an element of the same position, but in another matrix
+	///<br>
+	///The first parameter of the closure is a copy of the value from self,<br>
+	///the second parameter is a copy of the corresponding value from other<br>
+	///<br>
+	///Possible errors:<br>
+	///-NonMatchingSizes
+	fn apply_with<F>(&mut self, other: &Matrix<T>, closure: F) -> Result<(), MatrixError> where F: Fn(T, T) -> T
+	{
+		if !self.has_same_size(other)
+		{
+			return Err(MatrixError::NonMatchingSizes);
+		}
+		for row in 0..self.get_row_count()
+		{
+			for col in 0..self.get_col_count()
+			{
+				let var = closure(self.get(row, col).unwrap(), other.get(row, col).unwrap());
+				let _ = self.set(row, col, var);
+			}
+		}
+		Ok(())
+	}
+
+	///Applies a closure to each element of the matrix<br>
+	///<br>
+	///The first parameter of the closure is a mutable reference to the value from self
+	fn ref_apply<F>(&mut self, closure: F) where F: Fn(&mut T) -> T
+	{
+		for row in 0..self.get_row_count()
+		{
+			for col in 0..self.get_col_count()
+			{
+				let var = closure(self.get_mut_ref(row, col).unwrap());
+				let _ = self.set(row, col, var);
+			}
+		}
+	}
+
+	///Applies a closure to each element of the matrix in dependence of<br>
+	///the element itself and an element of the same position, but in another matrix
+	///<br>
+	///The first parameter of the closure is a mutable reference to the value from self,<br>
+	///the second parameter is a mutable reference to the corresponding value from other<br>
+	///<br>
+	///Possible errors:<br>
+	///-NonMatchingSizes
+	fn ref_apply_with<F>(&mut self, other: &Matrix<T>, closure: F) -> Result<(), MatrixError> where F: Fn(&mut T, &T) -> T
+	{
+		if !self.has_same_size(other)
+		{
+			return Err(MatrixError::NonMatchingSizes);
+		}
+		for row in 0..self.get_row_count()
+		{
+			for col in 0..self.get_col_count()
+			{
+				let var = closure(self.get_mut_ref(row, col).unwrap(), other.get_ref(row, col).unwrap());
+				let _ = self.set(row, col, var);
+			}
+		}
+		Ok(())
 	}
 }
 

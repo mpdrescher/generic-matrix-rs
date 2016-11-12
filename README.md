@@ -9,6 +9,8 @@ since regular Rust 2D Arrays can not be dynamically allocated.
 * Build a matrix with a MatrixBuilder
 * Generate a matrix from a vector
 * Basics (get & set & swap & get size)
+* Apply a closure to each element of the matrix
+* Apply a closure to each element of two matrices
 * Get row/column
 * Get area
 * Replace area
@@ -17,4 +19,4 @@ since regular Rust 2D Arrays can not be dynamically allocated.
 * Flip horizontally/vertically
 * Debug/Display
 * Transform into iterator
-* Count/list indices of an entry in the matrix
+* Count occurences/list indices of an entry in the matrix

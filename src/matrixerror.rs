@@ -2,6 +2,8 @@
 ///A list of errors that might occur while operating on the matrix
 pub enum MatrixError
 {
+	///Indicates that the size of two matrices are not the same
+	NonMatchingSizes,
 	///Indicates that the matrix before and after the reshape would have different sizes
 	ReshapeNotPossible,
 	///Indicates that the replacement has not the size of the area that should be replaced

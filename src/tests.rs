@@ -3,6 +3,7 @@ use matrixbuilder::MatrixBuilder;
 use matrixtraits::MatrixSlice;
 use matrixtraits::MatrixTransform;
 use matrixtraits::MatrixSearch;
+use matrixtraits::MatrixExec;
 
 //TEST DEFAULT IMPLEMENTATION
 
@@ -312,4 +313,84 @@ fn test_indices_of()
 						.unwrap();
 	let indices = matrix.get_indices_of(1);
 	assert_eq!(indices, vec!((0,0), (1,0)));
+}
+
+//TEST IMPL OF MATRIXEXEC
+
+#[test]
+fn test_ref_apply()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.build()
+						.unwrap();
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(1,4))
+						.row(vec!(9,16))
+						.build()
+						.unwrap();
+	matrix.ref_apply(|x| *x * *x);
+	assert_eq!(matrix, matrix2);
+}
+
+#[test]
+fn test_ref_apply_with()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.build()
+						.unwrap();
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(1,4))
+						.row(vec!(9,16))
+						.build()
+						.unwrap();
+	let matrix3 = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.build()
+						.unwrap();
+	matrix.ref_apply_with(&matrix2, |x, y| *y / *x).unwrap();
+	assert_eq!(matrix, matrix3);
+}
+
+#[test]
+fn test_apply()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.build()
+						.unwrap();
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(1,4))
+						.row(vec!(9,16))
+						.build()
+						.unwrap();
+	matrix.apply(|x| x * x);
+	assert_eq!(matrix, matrix2);
+}
+
+#[test]
+fn test_apply_with()
+{
+	let mut matrix = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.build()
+						.unwrap();
+	let matrix2 = MatrixBuilder::new()
+						.row(vec!(1,4))
+						.row(vec!(9,16))
+						.build()
+						.unwrap();
+	let matrix3 = MatrixBuilder::new()
+						.row(vec!(1,2))
+						.row(vec!(3,4))
+						.build()
+						.unwrap();
+	matrix.apply_with(&matrix2, |x, y| y / x).unwrap();
+	assert_eq!(matrix, matrix3);
 }

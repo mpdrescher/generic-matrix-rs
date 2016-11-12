@@ -3,7 +3,6 @@
 use matrix::Matrix;
 use matrixerror::MatrixError;
 
-//implementation needed
 pub trait MatrixSlice<T>
 {
 	fn get_row(&self, row: usize) -> Result<Vec<T>, MatrixError>;
@@ -27,13 +26,10 @@ pub trait MatrixSearch<T>
 	fn get_indices_of(&self, entry: T) -> Vec<(usize, usize)>;
 }
 
-pub trait MatrixOp<T, O>
+pub trait MatrixExec<T>
 {
-	fn add(self, other: Matrix<T>) -> Matrix<T>;
-	fn add_scalar(self, other: O) -> Matrix<T>;
-	fn sub(self, other: Matrix<T>) -> Matrix<T>;
-	fn sub_scalar(self, other: O) -> Matrix<T>;
-	fn mul(self, other: Matrix<T>) -> Matrix<T>;
-	fn mul_scalar(self, other: O) -> Matrix<T>;
-	fn div_scalar(self, other: O) -> Matrix<T>;
+	fn apply<F>(&mut self, closure: F) where F: Fn(T) -> T;
+	fn apply_with<F>(&mut self, other: &Matrix<T>, closure: F) -> Result<(), MatrixError> where F: Fn(T, T) -> T;
+	fn ref_apply<F>(&mut self, closure: F) where F: Fn(&mut T) -> T;
+	fn ref_apply_with<F>(&mut self, other: &Matrix<T>, closure: F) -> Result<(), MatrixError> where F: Fn(&mut T, &T) -> T;
 }
