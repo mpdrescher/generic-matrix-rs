@@ -1,4 +1,5 @@
 use matrix::Matrix;
+use matrixerror::MatrixError;
 
 ///Struct used for creating a prefilled matrix
 pub struct MatrixBuilder<T>
@@ -42,7 +43,7 @@ impl<T> MatrixBuilder<T> where T: Clone
 	}
 
 	///Creates a matrix from the row buffer
-	pub fn build(self) -> Option<Matrix<T>>
+	pub fn build(self) -> Result<Matrix<T>, MatrixError>
 	{
 		let mut buildvec: Vec<T> = Vec::new();
 		for mut vector in self.buffer

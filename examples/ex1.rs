@@ -11,12 +11,12 @@ fn main()
 						.build()
 						.unwrap();
 
-	println!("field 1,1: {} \n", matrix.get(1, 1).0);
+	println!("field 1,1: {} \n", matrix.get(1, 1).unwrap());
 	
 	println!("changing field 1,1\n");
-	matrix.set(1, 1, 5);
+	let _ = matrix.set(1, 1, 5);
 	
-	println!("field 1,1: {} \n", matrix.get(1, 1).0);
+	println!("field 1,1: {} \n", matrix.get(1, 1).unwrap());
 
 	println!("{}", matrix);
 }

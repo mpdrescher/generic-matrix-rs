@@ -16,7 +16,6 @@ pub struct Matrix<T>
 	columns: usize,
 	rows: usize,
 	fields: Vec<T>,
-	default: T
 }
 
 impl<T> Matrix<T> where T: Clone
@@ -24,12 +23,13 @@ impl<T> Matrix<T> where T: Clone
 	///Constructs a new matrix with a given width + height<br>
 	///and fills it with copies of a default value<br>
 	///<br>
-	///Returns None if either the width or the height of the matrix is zero
-	pub fn new(rows: usize, cols: usize, default: T) -> Option<Matrix<T>>
+	///Possible errors:<br>
+	///-IndexOOB
+	pub fn new(rows: usize, cols: usize, default: T) -> Result<Matrix<T>, MatrixError>
 	{
 		if rows == 0 || cols == 0
 		{
-			return None;
+			return Err(MatrixError::IndexOOB);
 		}
 		let vecsize = rows*cols;
 		let mut fields = Vec::with_capacity(vecsize);
@@ -37,105 +37,87 @@ impl<T> Matrix<T> where T: Clone
 		{
 			fields.push(default.clone());
 		}
-		Some(Matrix
+		Ok(Matrix
 		{
 			columns: cols,
 			rows: rows,
 			fields: fields,
-			default: default
 		})
 	}
 
 	///Constructs a new matrix with a given width + height<br>
 	///and fills it with data from a vector (data structure is described in Matrix struct doc)<br>
 	///<br>
-	///Returns None if:<br>
-	///-vector size doesn't match rows * cols
-	///-rows or cols is zero
-	pub fn from_vec(vector: Vec<T>, rows: usize, cols: usize) -> Option<Matrix<T>>
+	///Possible errors:<br>
+	///-InvalidVecSize
+	///-InvalidSize
+	pub fn from_vec(vector: Vec<T>, rows: usize, cols: usize) -> Result<Matrix<T>, MatrixError>
 	{
 		let size = rows*cols;
 		if vector.len() != size
 		{
-			return None;
+			return Err(MatrixError::InvalidVecSize);
 		}
 		if rows == 0 || cols == 0
 		{
-			return None;
+			return Err(MatrixError::InvalidSize);
 		}
-		let default = vector.get(0).unwrap().clone();
-		Some(
+		Ok(
 		Matrix
 		{
 			columns: cols,
 			rows: rows,
 			fields: vector,
-			default: default
 		})
 	}
 
 	///Returns a reference to the value at the given position -> M(row, col)<br>
 	///<br>
-	///Errors:<br>
+	///Possible errors: <br>
 	///-IndexOOB
-	pub fn get_ref(&self, row: usize, col: usize) -> (&T, MatrixError)
+	pub fn get_ref(&self, row: usize, col: usize) -> Result<&T, MatrixError>
 	{
 		if !self.is_valid_index(row, col)
 		{
-			return (&self.default, MatrixError::IndexOOB);
+			return Err(MatrixError::IndexOOB)
 		}
 		let index = self.index_of(row, col);
 		let result = self.fields.get(index).unwrap(); //should not happen
-		(result, MatrixError::None)
+		Ok(result)
 	}
 
 	///Returns a copy of the value at the given position -> M(row, col)<br>
 	///<br>
-	///Errors:<br>
+	///Possible errors: <br>
 	///-IndexOOB
-	pub fn get(&self, row: usize, col: usize) -> (T, MatrixError)
+	pub fn get(&self, row: usize, col: usize) -> Result<T, MatrixError>
 	{
-		let (result, error) = self.get_ref(row, col);
-		(result.clone(), error)
+		let reference = try!(self.get_ref(row, col));
+		Ok(reference.clone())
 	}
 
 	///Sets the field at the given position (M(row, col))<br>
 	///<br>
-	///Errors:<br>
+	///Possible errors: <br>
 	///-IndexOOB
-	pub fn set(&mut self, row: usize, col: usize, value: T) -> MatrixError
+	pub fn set(&mut self, row: usize, col: usize, value: T) -> Result<(), MatrixError>
 	{
-		let (mutref, error) = self.get_mut(row, col);
-		if error != MatrixError::None
-		{
-			return error;
-		}
-		match mutref
-		{
-			Some(mut v) => {
-				*v = value;
-			},
-			//would only get called in case of OOB error, but OOB is handled in if error != MatrixError::None
-			None => {} 
-		};
-		MatrixError::None
+		let mutref = try!(self.get_mut(row, col));
+		*mutref = value;
+		Ok(())
 	}
 
-	pub fn swap(&mut self, row_1: usize, col_1: usize, row_2: usize, col_2: usize) -> MatrixError
+	///Swaps values of two fields<br>
+	///<br>
+	///Possible errors:<br>
+	///-IndexOOB
+	pub fn swap(&mut self, row_1: usize, col_1: usize, row_2: usize, col_2: usize) -> Result<(), MatrixError>
 	{
-		let (temp_1, temp1_error) = self.get(row_1, col_1);
-		let (temp_2, temp2_error) = self.get(row_2, col_2);
-		if temp1_error != MatrixError::None
-		{
-			return temp1_error
-		}
-		if temp2_error != MatrixError::None
-		{
-			return temp2_error
-		}
-		self.set(row_1, col_1, temp_2);
-		self.set(row_2, col_2, temp_1);
-		MatrixError::None
+		let temp_1 = try!(self.get(row_1, col_1));
+		let temp_2 = try!(self.get(row_2, col_2));
+		try!(self.set(row_1, col_1, temp_2));
+		try!(self.set(row_2, col_2, temp_1));
+		Ok(())
 	}
 
 	///Returns the width/columns of the matrix
@@ -164,15 +146,18 @@ impl<T> Matrix<T> where T: Clone
 	}
 
 	//like get(..), but not used because of set(..)
-	fn get_mut(&mut self, row: usize, col: usize) -> (Option<&mut T>, MatrixError)
+	//
+	//Possible errors:
+	//-IndexOOB
+	fn get_mut(&mut self, row: usize, col: usize) -> Result<&mut T, MatrixError>
 	{
 		if !self.is_valid_index(row, col)
 		{
-			return (None, MatrixError::IndexOOB);
+			return Err(MatrixError::IndexOOB);
 		}
 		let index = self.index_of(row, col);
 		let result = self.fields.get_mut(index).unwrap();
-		(Some(result), MatrixError::None)
+		Ok(result)
 	}
 
 	//projects the 2D indices to 1D index
@@ -184,43 +169,103 @@ impl<T> Matrix<T> where T: Clone
 
 impl<T> MatrixSlice<T> for Matrix<T> where T: Clone
 {
-	fn get_row(&self, row: usize) -> Vec<T>
+	///Returns a row of the matrix as a vector<br>
+	///<br>
+	///Possible errors:<br>
+	///-IndexOOB
+	fn get_row(&self, row: usize) -> Result<Vec<T>, MatrixError>
 	{
+		if row >= self.get_row_count()
+		{
+			return Err(MatrixError::IndexOOB);
+		}
 		let mut result = Vec::new();
 		for col in 0..self.get_col_count()
 		{
-			result.push(self.get(row, col).0);
+			result.push(try!(self.get(row, col)));
 		}
-		result
+		Ok(result)
 	}
 
-	fn get_col(&self, col: usize) -> Vec<T>
+	///Returns a column of the matrix as a vector<br>
+	///<br>
+	///Possible errors: <br>
+	///-IndexOOB
+	fn get_col(&self, col: usize) -> Result<Vec<T>, MatrixError>
 	{
+		if col >= self.get_col_count()
+		{
+			return Err(MatrixError::IndexOOB);
+		}
 		let mut result = Vec::new();
 		for row in 0..self.get_row_count()
 		{
-			result.push(self.get(row, col).0);
+			result.push(try!(self.get(row, col)));
 		}
-		result
+		Ok(result)
 	}
 	
-	fn crop(self, row_1: usize, col_1: usize, row_2: usize, col_2: usize) -> Matrix<T>
+	///Returns a subarea of the matrix<br>
+	///The area is defined by:<br>
+	///Top left corner: (row_1, col_1)<br>
+	///Bottom right corner: (row_2, col_2)<br<
+	///<br>
+	///Possible errors: <br>
+	///-IndexOOB<br>
+	///-InvalidVecSize (should not happen)<br>
+	///-InvalidSize (should not happen)
+	fn get_area(&self, row_1: usize, col_1: usize, row_2: usize, col_2: usize) -> Result<Matrix<T>, MatrixError>
 	{
-		let valid_1 = self.is_valid_index(row_1, col_1);
-		let valid_2 = self.is_valid_index(row_2, col_2);
-		
+		let row_2_post = row_2 + 1;
+		let col_2_post = col_2 + 1;
+		let new_rows = row_2_post - row_1;
+		let new_cols = col_2_post - col_1;
+		let mut val_vec = Vec::new();
+		for row in row_1..row_2_post
+		{
+			for col in col_1..col_2_post
+			{
+				val_vec.push(try!(self.get(row, col)));
+			}
+		}
+		let new_matrix: Matrix<T> = try!(Matrix::from_vec(val_vec, new_rows, new_cols));
+		Ok(new_matrix)
 	}
 
-	fn copy_crop(&self, row_1: usize, col_1: usize, row_2: usize, col_2: usize) -> Matrix<T>
+	///Inserts a matrix into self<br>
+	///The insertion area is defined by:<br>
+	///Top left corner: (row_1, col_1)<br>
+	///Bottom right corner: (row_2, col_2)<br<
+	///<br>
+	///Possible errors: <br>
+	///-IndexOOB<br>
+	///-ReplacementMismatch
+	fn replace_area(&mut self, row_1: usize, col_1: usize, row_2: usize, col_2: usize, replacement: Matrix<T>) -> Result<(), MatrixError>
 	{
-
+		let row_2_post = row_2 + 1;
+		let col_2_post = col_2 + 1;
+		let new_rows = row_2_post - row_1;
+		let new_cols = col_2_post - col_1;
+		if new_rows != replacement.get_row_count() || new_cols != replacement.get_col_count()
+		{
+			return Err(MatrixError::ReplacementMismatch);
+		}
+		let mut rep_row = 0;
+		let mut rep_col = 0;
+		for row in row_1..row_2_post
+		{
+			for col in col_1..col_2_post
+			{
+				let val = try!(replacement.get(rep_row, rep_col));
+				try!(self.set(row, col, val));
+				rep_col += 1;
+			}
+			rep_col = 0;
+			rep_row += 1;
+		}
+		Ok(())
 	}
-
-	fn replace_area(&self, row_1: usize, col_1: usize, row_2: usize, col_2: usize, replacement: Matrix<T>)
-	{
-
-	}
-} 
+}
 
 impl<T> fmt::Display for Matrix<T> where T: Clone + fmt::Display
 {
@@ -233,14 +278,14 @@ impl<T> fmt::Display for Matrix<T> where T: Clone + fmt::Display
 			output.push('[');
 			for col in 0..self.get_col_count()
 			{
-				let val = self.get(row, col);
+				let val = self.get(row, col).unwrap();
 				if col != self.get_col_count() - 1
 				{
-					output.push_str(&format!("{}, ", val.0));
+					output.push_str(&format!("{}, ", val));
 				}
 				else 
 				{
-				    output.push_str(&format!("{}", val.0));
+				    output.push_str(&format!("{}", val));
 				}
 			}
 			output.push(']');
@@ -266,14 +311,14 @@ impl<T> fmt::Debug for Matrix<T> where T: Clone + fmt::Debug
 			output.push('[');
 			for col in 0..self.get_col_count()
 			{
-				let val = self.get(row, col);
+				let val = self.get(row, col).unwrap();
 				if col != self.get_col_count() - 1
 				{
-					output.push_str(&format!("{:?}, ", val.0));
+					output.push_str(&format!("{:?}, ", val));
 				}
 				else 
 				{
-				    output.push_str(&format!("{:?}", val.0));
+				    output.push_str(&format!("{:?}", val));
 				}
 			}
 			output.push(']');
