@@ -1,5 +1,5 @@
 use matrixerror::MatrixError;
-use matrixtraits::{MatrixSlice, MatrixTransform};
+use matrixtraits::{MatrixSlice, MatrixTransform, MatrixSearch};
 
 use std::fmt;
 use std::iter;
@@ -146,6 +146,18 @@ impl<T> Matrix<T> where T: Clone
 		row < self.rows && col < self.columns //not necessary to check >= 0 -> usize, not isize
 	}
 
+	///Returns how many elements are in the matrix
+	pub fn get_element_count(&self) -> usize
+	{
+		self.get_row_count() * self.get_col_count()
+	}
+
+	///Returns wether self and another matrix have the same size
+	pub fn has_same_size(&self, other: &Matrix<T>) -> bool
+	{
+		self.get_row_count() == other.get_row_count() && self.get_col_count() == other.get_col_count()
+	}
+
 	//like get(..), but not used because of set(..)
 	//
 	//Possible errors:
@@ -265,6 +277,53 @@ impl<T> MatrixSlice<T> for Matrix<T> where T: Clone
 			rep_row += 1;
 		}
 		Ok(())
+	}
+}
+
+impl<T> MatrixSearch<T> for Matrix<T> where T: PartialEq + Clone
+{
+	///Returns wether the matrix contains the specified entry
+	fn has(&self, entry: T) -> bool
+	{
+		for field in &self.fields
+		{
+			if *field == entry
+			{
+				return true;
+			}
+		}
+		false
+	}
+
+	///Returns how many times entry is in the matrix
+	fn count(&self, entry: T) -> usize
+	{
+		let mut counter = 0;
+		for field in &self.fields
+		{
+			if *field == entry
+			{
+				counter += 1;
+			}
+		}
+		counter
+	}
+
+	///Returns the indices at which entry is contained in the matrix
+	fn get_indices_of(&self, entry: T) -> Vec<(usize, usize)>
+	{
+		let mut result = Vec::new();
+		for row in 0..self.get_row_count()
+		{
+			for col in 0..self.get_col_count()
+			{
+				if entry == *self.get_ref(row, col).unwrap()
+				{
+					result.push((row, col));
+				}
+			}
+		}
+		result
 	}
 }
 

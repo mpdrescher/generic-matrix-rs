@@ -19,3 +19,21 @@ pub trait MatrixTransform<T>
 	fn flip_hor(&mut self);
 	fn flip_vert(&mut self);
 }
+
+pub trait MatrixSearch<T>
+{
+	fn has(&self, entry: T) -> bool;
+	fn count(&self, entry: T) -> usize;
+	fn get_indices_of(&self, entry: T) -> Vec<(usize, usize)>;
+}
+
+pub trait MatrixOp<T, O>
+{
+	fn add(self, other: Matrix<T>) -> Matrix<T>;
+	fn add_scalar(self, other: O) -> Matrix<T>;
+	fn sub(self, other: Matrix<T>) -> Matrix<T>;
+	fn sub_scalar(self, other: O) -> Matrix<T>;
+	fn mul(self, other: Matrix<T>) -> Matrix<T>;
+	fn mul_scalar(self, other: O) -> Matrix<T>;
+	fn div_scalar(self, other: O) -> Matrix<T>;
+}
