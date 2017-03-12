@@ -74,7 +74,7 @@ mod tests {
         assert_eq!(mat.height(), 2);
         assert_eq!(mat.get(0,0).unwrap().clone(), 0);
         assert_eq!(mat.get(2,2), None);
-        assert!(mat.set(1,1,5));
-        assert_eq!(mat.get(1,1).unwrap().clone(), 5);
+        assert!(mat.set(1,0,5));
+        assert_eq!(mat.get(1,0).unwrap().clone(), 5);
     }
 }
