@@ -11,7 +11,7 @@ List of methods of `matrix::Matrix`:
 * `fn height(&self) -> usize`
 * `fn bounds(&self) -> (usize, usize)`: the same as `(width(), height())`
 * `fn fields(&self) -> &Vec<T>`
-* `fn inbound(&self, x: usize, y: usize) -> bool`
+* `fn valid_index(&self, x: usize, y: usize) -> bool`
 
 ##Usage
 
