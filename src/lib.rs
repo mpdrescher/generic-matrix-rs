@@ -31,14 +31,14 @@ impl<T: Clone> Matrix<T> {
     }
 
     pub fn get(&self, x: usize, y: usize) -> Option<&T> {
-        if !self.check_bounds(x,y) {
+        if !self.inbound(x,y) {
             return None;
         }
         self.fields.get(self.map_coord(x,y))
     }
 
     pub fn set(&mut self, x: usize, y: usize, val: T) -> bool {
-        if !self.check_bounds(x,y) {
+        if !self.inbound(x,y) {
             return false;
         }
         let index = self.map_coord(x,y);
@@ -57,7 +57,7 @@ impl<T: Clone> Matrix<T> {
         y*self.width + x
     }
 
-    pub fn check_bounds(&self, x: usize, y: usize) -> bool {
+    pub fn inbound(&self, x: usize, y: usize) -> bool {
         x < self.width && y < self.height
     }
 }
